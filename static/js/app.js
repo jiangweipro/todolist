@@ -133,11 +133,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 标记待办事项为已删除
-    async function markTodoAsDeleted(id, todoElement) {
-        try {
-            const response = await fetch(`/api/todos/mark-deleted/${id}`, {
-                method: 'POST'
-            });
+async function markTodoAsDeleted(id, todoElement) {
+    try {
+        const response = await fetch(`/api/todos/mark-deleted/${id}`, {
+            method: 'DELETE'
+        });
 
             if (response.ok) {
                 todoElement.remove();

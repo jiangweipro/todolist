@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 永久删除待办事项
     async function permanentlyDeleteTodo(id, todoElement) {
         try {
-            const response = await fetch(`/api/todos/${id}`, {
+            const response = await fetch(`/api/todos/delete/${id}`, {
                 method: 'DELETE'
             });
 

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>已完成待办事项</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logout-btn, .back-btn {
+            padding: 8px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .back-btn {
+            background-color: #3498db;
+        }
+        
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .completed-todo-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid #2ecc71;
+        }
+        
+        .completed-todo-title {
+            flex-grow: 1;
+            text-decoration: line-through;
+            color: #7f8c8d;
+        }
+        
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <h1>已完成待办事项</h1>
+            <div>
+                <span id="username">用户名</span>
+                <span id="admin-badge" style="display:none; margin-left: 10px; background-color: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">管理员</span>
+                <button id="back-btn" class="back-btn">返回</button>
+                <button id="logout-btn" class="logout-btn">登出</button>
+            </div>
+        </div>
+        
+        <div class="completed-todo-list" id="completed-todo-list">
+            <!-- 已完成待办事项将通过JavaScript动态添加 -->
+        </div>
+    </div>
+
+    <template id="completed-todo-item-template">
+        <div class="completed-todo-item">
+            <span class="completed-todo-title"></span>
+            <span class="todo-user" style="display:none; margin-left: 10px; font-size: 12px; background-color: #f1f1f1; color: #555; padding: 2px 6px; border-radius: 10px;"></span>
+            <button class="delete-btn">永久删除</button>
+        </div>
+    </template>
+
+    <script src="/static/js/completed.js"></script>
+</body>
+</html>

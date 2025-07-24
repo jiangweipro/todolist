@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办事项列表</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logout-btn {
+            padding: 8px 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .nav-link {
+            display: inline-block;
+            margin-left: 15px;
+            padding: 5px 10px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-link:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <h1>待办事项列表</h1>
+            <div>
+                <span id="username">用户名</span>
+                <span id="admin-badge" style="display:none; margin-left: 10px; background-color: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">管理员</span>
+                <a href="/completed" class="nav-link">已完成</a>
+                <a href="/blogs" class="nav-link">博客</a>
+                <button id="logout-btn" class="logout-btn">登出</button>
+            </div>
+        </div>
+        
+        <div class="add-todo">
+            <input type="text" id="new-todo" placeholder="添加新的待办事项..." />
+            <button id="add-btn">添加</button>
+        </div>
+        
+        <div class="todo-list" id="todo-list">
+            <!-- 待办事项将通过JavaScript动态添加 -->
+        </div>
+    </div>
+
+    <template id="todo-item-template">
+        <div class="todo-item">
+            <input type="checkbox" class="todo-checkbox" />
+            <span class="todo-title"></span>
+            <span class="todo-user" style="display:none; margin-left: 10px; font-size: 12px; background-color: #f1f1f1; color: #555; padding: 2px 6px; border-radius: 10px;"></span>
+            <button class="delete-btn">删除</button>
+        </div>
+    </template>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

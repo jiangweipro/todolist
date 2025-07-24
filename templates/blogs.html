@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客列表</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logout-btn, .back-btn, .new-blog-btn {
+            padding: 8px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .back-btn {
+            background-color: #3498db;
+        }
+        
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .new-blog-btn {
+            background-color: #2ecc71;
+        }
+        
+        .new-blog-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .blog-list {
+            margin-top: 20px;
+        }
+        
+        .blog-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+        
+        .blog-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .blog-meta {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        .blog-content-preview {
+            color: #333;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        
+        .blog-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .blog-actions button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .view-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .view-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .edit-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background-color: #d35400;
+        }
+        
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .private-badge {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <h1>博客列表</h1>
+            <div>
+                <span id="username">用户名</span>
+                <span id="admin-badge" style="display:none; margin-left: 10px; background-color: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">管理员</span>
+                <button id="new-blog-btn" class="new-blog-btn">新建博客</button>
+                <button id="back-btn" class="back-btn">返回</button>
+                <button id="logout-btn" class="logout-btn">登出</button>
+            </div>
+        </div>
+        
+        <div class="blog-list" id="blog-list">
+            <!-- 博客列表将通过JavaScript动态添加 -->
+        </div>
+    </div>
+
+    <template id="blog-item-template">
+        <div class="blog-item">
+            <div class="blog-title"></div>
+            <div class="blog-meta">
+                <span class="blog-author"></span> · <span class="blog-date"></span>
+            </div>
+            <div class="blog-content-preview"></div>
+            <div class="blog-actions">
+                <button class="view-btn">查看</button>
+                <button class="edit-btn" style="display:none;">编辑</button>
+                <button class="delete-btn" style="display:none;">删除</button>
+            </div>
+        </div>
+    </template>
+
+    <script src="/static/js/blogs.js"></script>
+</body>
+</html>

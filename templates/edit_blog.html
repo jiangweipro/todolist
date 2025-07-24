@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑博客</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logout-btn, .back-btn {
+            padding: 8px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .back-btn {
+            background-color: #3498db;
+        }
+        
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .blog-form {
+            margin-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        textarea.form-control {
+            min-height: 200px;
+            resize: vertical;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-group input {
+            margin-right: 10px;
+        }
+        
+        .submit-btn {
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .submit-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <h1>编辑博客</h1>
+            <div>
+                <span id="username">用户名</span>
+                <span id="admin-badge" style="display:none; margin-left: 10px; background-color: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">管理员</span>
+                <button id="back-btn" class="back-btn">返回</button>
+                <button id="logout-btn" class="logout-btn">登出</button>
+            </div>
+        </div>
+        
+        <div class="blog-form">
+            <div class="form-group">
+                <label for="blog-title">标题</label>
+                <input type="text" id="blog-title" class="form-control" placeholder="请输入博客标题">
+            </div>
+            
+            <div class="form-group">
+                <label for="blog-content">内容</label>
+                <textarea id="blog-content" class="form-control" placeholder="请输入博客内容"></textarea>
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="is-private">
+                <label for="is-private">设为私密博客（仅自己可见）</label>
+            </div>
+            
+            <button id="submit-btn" class="submit-btn">更新博客</button>
+        </div>
+    </div>
+
+    <script src="/static/js/edit_blog.js"></script>
+</body>
+</html>

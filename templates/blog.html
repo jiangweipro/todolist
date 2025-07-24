@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客详情</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .logout-btn, .back-btn, .edit-btn {
+            padding: 8px 15px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 10px;
+        }
+        
+        .logout-btn {
+            background-color: #e74c3c;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .back-btn {
+            background-color: #3498db;
+        }
+        
+        .back-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .edit-btn {
+            background-color: #f39c12;
+        }
+        
+        .edit-btn:hover {
+            background-color: #d35400;
+        }
+        
+        .blog-container {
+            margin-top: 20px;
+        }
+        
+        .blog-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .blog-meta {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        
+        .blog-content {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .comments-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        
+        .comments-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        
+        .comment-form {
+            margin-bottom: 20px;
+        }
+        
+        .comment-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        
+        .comment-submit {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .comment-submit:hover {
+            background-color: #2980b9;
+        }
+        
+        .comments-list {
+            margin-top: 20px;
+        }
+        
+        .comment-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        
+        .comment-author {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .comment-date {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-left: 10px;
+        }
+        
+        .comment-content {
+            margin-top: 5px;
+        }
+        
+        .comment-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 5px;
+        }
+        
+        .delete-comment-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .delete-comment-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .private-badge {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-info">
+            <h1>博客详情</h1>
+            <div>
+                <span id="username">用户名</span>
+                <span id="admin-badge" style="display:none; margin-left: 10px; background-color: #3498db; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px;">管理员</span>
+                <button id="edit-btn" class="edit-btn" style="display:none;">编辑</button>
+                <button id="back-btn" class="back-btn">返回</button>
+                <button id="logout-btn" class="logout-btn">登出</button>
+            </div>
+        </div>
+        
+        <div class="blog-container" id="blog-container">
+            <!-- 博客内容将通过JavaScript动态添加 -->
+            <div class="blog-title" id="blog-title"></div>
+            <div class="blog-meta" id="blog-meta">
+                <span id="blog-author"></span> · <span id="blog-date"></span>
+                <span id="private-badge" class="private-badge" style="display:none;">私密</span>
+            </div>
+            <div class="blog-content" id="blog-content"></div>
+        </div>
+        
+        <div class="comments-section">
+            <h2 class="comments-title">评论</h2>
+            <div class="comment-form" id="comment-form">
+                <textarea class="comment-input" id="comment-input" placeholder="添加评论..."></textarea>
+                <button class="comment-submit" id="comment-submit">提交评论</button>
+            </div>
+            <div class="comments-list" id="comments-list">
+                <!-- 评论将通过JavaScript动态添加 -->
+            </div>
+        </div>
+    </div>
+
+    <template id="comment-item-template">
+        <div class="comment-item">
+            <div>
+                <span class="comment-author"></span>
+                <span class="comment-date"></span>
+            </div>
+            <div class="comment-content"></div>
+            <div class="comment-actions">
+                <button class="delete-comment-btn" style="display:none;">删除</button>
+            </div>
+        </div>
+    </template>
+
+    <script src="/static/js/blog.js"></script>
+</body>
+</html>

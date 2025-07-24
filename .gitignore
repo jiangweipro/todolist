@@ -1,0 +1,5 @@
+# 忽略所有以点开头的文件和目录
+.*
+data
+# 但不忽略.gitignore本身
+!.gitignore

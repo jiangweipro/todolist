@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -431,7 +432,7 @@ func (s *BlogStore) SaveToFile() error {
 	}
 
 	// 写入文件
-	return ioutil.WriteFile(BLOGS_FILE, jsonData, 0644)
+	return os.WriteFile("data/blogs.json", jsonData, 0644)
 }
 
 // LoadFromFile 从文件加载博客数据
@@ -448,7 +449,7 @@ func (s *BlogStore) LoadFromFile() error {
 	}
 
 	// 读取文件
-	jsonData, err := ioutil.ReadFile(BLOGS_FILE)
+	jsonData, err := os.ReadFile("data/blogs.json")
 	if err != nil {
 		return err
 	}

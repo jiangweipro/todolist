@@ -1298,7 +1298,7 @@ func handleNewBlogPage(w http.ResponseWriter, r *http.Request) {
 		"Username": username,
 	}
 	
-	err := templates.ExecuteTemplate(w, "new-blog.html", data)
+	err := templates.ExecuteTemplate(w, "new_blog.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

@@ -167,15 +167,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // 删除评论
     async function deleteComment(commentId, commentElement) {
         try {
-            const response = await fetch(`/api/blogs/comments/${commentId}`, {
+            // 获取博客ID
+            const blogId = window.location.pathname.split('/').pop();
+            // 修正API路径格式
+            const response = await fetch(`/api/blogs/comments/${blogId}/${commentId}`, {
                 method: 'DELETE'
             });
             
             if (response.ok) {
                 commentElement.remove();
+            } else {
+                // 如果删除失败，显示错误信息
+                const errorData = await response.json().catch(() => ({ message: '删除评论失败' }));
+                alert(errorData.message || '删除评论失败');
             }
         } catch (error) {
             console.error('删除评论失败:', error);
+            alert('删除评论失败: ' + error.message);
         }
     }
     

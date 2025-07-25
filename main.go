@@ -41,7 +41,9 @@ type Todo struct {
 	Username  string `json:"username"` // 添加用户名字段，方便前端显示
 	Title     string `json:"title"`
 	Completed bool   `json:"completed"`
-	Deleted   bool   `json:"deleted"`   // 标记待办事项是否已被删除（进入已完成状态）
+	Deleted   bool   `json:"deleted"` // 标记待办事项是否已被删除（进入已完成状态）
+	Priority  int    `json:"priority"` // 优先级: 0=低, 1=中, 2=高
+	Order     int    `json:"order"`    // 排序顺序
 }
 
 // UserStore 管理用户的存储
@@ -59,12 +61,12 @@ func NewUserStore() *UserStore {
 		nextID:   1,
 		sessions: make(map[string]Session),
 	}
-	
+
 	// 尝试从文件加载数据
 	err := store.LoadFromFile()
 	if err != nil {
 		log.Printf("加载用户数据失败: %v，将使用默认数据", err)
-		
+
 		// 创建默认的admin用户
 		admin := User{
 			ID:       store.nextID,
@@ -72,11 +74,11 @@ func NewUserStore() *UserStore {
 			Password: "admin", // 实际应用中应该使用安全的密码
 			IsAdmin:  true,
 		}
-		
+
 		store.users = append(store.users, admin)
 		store.nextID++
 	}
-	
+
 	return store
 }
 
@@ -176,13 +178,13 @@ func NewTodoStore() *TodoStore {
 		todos:  make([]Todo, 0),
 		nextID: 1,
 	}
-	
+
 	// 尝试从文件加载数据
 	err := store.LoadFromFile()
 	if err != nil {
 		log.Printf("加载待办事项数据失败: %v，将使用默认数据", err)
 	}
-	
+
 	return store
 }
 
@@ -190,10 +192,10 @@ func NewTodoStore() *TodoStore {
 func (s *TodoStore) GetAllByUserID(userID int, includeDeleted bool) []Todo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	// 获取用户名
 	username := getUsernameByID(userID)
-	
+
 	userTodos := make([]Todo, 0)
 	for _, todo := range s.todos {
 		if todo.UserID == userID {
@@ -201,7 +203,7 @@ func (s *TodoStore) GetAllByUserID(userID int, includeDeleted bool) []Todo {
 			if !includeDeleted && todo.Deleted {
 				continue
 			}
-			
+
 			// 确保待办事项有用户名
 			todoCopy := todo
 			if todoCopy.Username == "" {
@@ -210,7 +212,7 @@ func (s *TodoStore) GetAllByUserID(userID int, includeDeleted bool) []Todo {
 			userTodos = append(userTodos, todoCopy)
 		}
 	}
-	
+
 	return userTodos
 }
 
@@ -218,35 +220,43 @@ func (s *TodoStore) GetAllByUserID(userID int, includeDeleted bool) []Todo {
 func (s *TodoStore) GetAllTodos(includeDeleted bool) []Todo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	// 返回所有待办事项的副本，并确保每个待办事项都有用户名
 	allTodos := make([]Todo, 0, len(s.todos))
-	
+
 	for _, todo := range s.todos {
 		// 根据includeDeleted参数决定是否包含已删除的待办事项
 		if !includeDeleted && todo.Deleted {
 			continue
 		}
-		
+
 		// 创建副本并确保有用户名
 		todoCopy := todo
 		if todoCopy.Username == "" {
 			todoCopy.Username = getUsernameByID(todo.UserID)
 		}
-		
+
 		allTodos = append(allTodos, todoCopy)
 	}
-	
+
 	return allTodos
 }
 
 // Add 添加一个新的待办事项
-func (s *TodoStore) Add(userID int, title string) Todo {
+func (s *TodoStore) Add(userID int, title string, priority int) Todo {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	// 获取用户名
 	username := getUsernameByID(userID)
+
+	// 计算新的排序顺序（放在最前面）
+	maxOrder := 0
+	for _, todo := range s.todos {
+		if todo.UserID == userID && !todo.Deleted && todo.Order > maxOrder {
+			maxOrder = todo.Order
+		}
+	}
 
 	todo := Todo{
 		ID:        s.nextID,
@@ -254,6 +264,9 @@ func (s *TodoStore) Add(userID int, title string) Todo {
 		Username:  username,
 		Title:     title,
 		Completed: false,
+		Deleted:   false,
+		Priority:  priority,
+		Order:     maxOrder + 1,
 	}
 
 	s.todos = append(s.todos, todo)
@@ -275,10 +288,10 @@ func (s *TodoStore) Toggle(id int, userID int, isAdmin bool) (Todo, error) {
 		// 如果不是管理员，只能操作自己的待办事项
 		if todo.ID == id && (isAdmin || todo.UserID == userID) {
 			s.todos[i].Completed = !s.todos[i].Completed
-			
+
 			// 保存数据到文件
 			go s.SaveToFile()
-			
+
 			return s.todos[i], nil
 		}
 	}
@@ -299,10 +312,10 @@ func (s *TodoStore) MarkAsDeleted(id int, userID int, isAdmin bool) (Todo, error
 			s.todos[i].Deleted = true
 			// 同时标记为已完成
 			s.todos[i].Completed = true
-			
+
 			// 保存数据到文件
 			go s.SaveToFile()
-			
+
 			return s.todos[i], nil
 		}
 	}
@@ -323,12 +336,12 @@ func (s *TodoStore) Delete(id int, userID int, isAdmin bool) error {
 			if !todo.Deleted {
 				return fmt.Errorf("todo with ID %d must be marked as deleted first", id)
 			}
-			
+
 			s.todos = append(s.todos[:i], s.todos[i+1:]...)
-			
+
 			// 保存数据到文件
 			go s.SaveToFile()
-			
+
 			return nil
 		}
 	}
@@ -336,17 +349,45 @@ func (s *TodoStore) Delete(id int, userID int, isAdmin bool) error {
 	return fmt.Errorf("todo with ID %d not found or not owned by user", id)
 }
 
+// UpdateOrder 更新待办事项的排序顺序
+func (s *TodoStore) UpdateOrder(id int, order int, userID int) (Todo, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	var todoIndex = -1
+
+	// 查找待办事项
+	for i, t := range s.todos {
+		if t.ID == id && t.UserID == userID && !t.Deleted {
+			todoIndex = i
+			break
+		}
+	}
+
+	if todoIndex == -1 {
+		return Todo{}, fmt.Errorf("todo with ID %d not found or not owned by user", id)
+	}
+
+	// 更新排序顺序
+	s.todos[todoIndex].Order = order
+
+	// 保存数据到文件
+	go s.SaveToFile()
+
+	return s.todos[todoIndex], nil
+}
+
 // 获取用户名通过用户ID
 func getUsernameByID(userID int) string {
 	userStore.mu.Lock()
 	defer userStore.mu.Unlock()
-	
+
 	for _, user := range userStore.users {
 		if user.ID == userID {
 			return user.Username
 		}
 	}
-	
+
 	return "未知用户"
 }
 
@@ -385,26 +426,26 @@ type Comment struct {
 
 // BlogStore 管理博客的存储
 type BlogStore struct {
-	mu       sync.Mutex
-	blogs    []Blog
-	nextID   int
+	mu            sync.Mutex
+	blogs         []Blog
+	nextID        int
 	nextCommentID int
 }
 
 // NewBlogStore 创建一个新的BlogStore
 func NewBlogStore() *BlogStore {
 	store := &BlogStore{
-		blogs:    make([]Blog, 0),
-		nextID:   1,
+		blogs:         make([]Blog, 0),
+		nextID:        1,
 		nextCommentID: 1,
 	}
-	
+
 	// 尝试从文件加载数据
 	err := store.LoadFromFile()
 	if err != nil {
 		log.Printf("加载博客数据失败: %v，将使用默认数据", err)
 	}
-	
+
 	return store
 }
 
@@ -420,9 +461,9 @@ func (s *BlogStore) SaveToFile() error {
 
 	// 创建要保存的数据结构
 	data := struct {
-		Blogs    []Blog `json:"blogs"`
-		NextID   int    `json:"next_id"`
-		NextCommentID int `json:"next_comment_id"`
+		Blogs         []Blog `json:"blogs"`
+		NextID        int    `json:"next_id"`
+		NextCommentID int    `json:"next_comment_id"`
 	}{s.blogs, s.nextID, s.nextCommentID}
 
 	// 将数据编码为JSON
@@ -456,9 +497,9 @@ func (s *BlogStore) LoadFromFile() error {
 
 	// 解码JSON数据
 	var data struct {
-		Blogs    []Blog `json:"blogs"`
-		NextID   int    `json:"next_id"`
-		NextCommentID int `json:"next_comment_id"`
+		Blogs         []Blog `json:"blogs"`
+		NextID        int    `json:"next_id"`
+		NextCommentID int    `json:"next_comment_id"`
 	}
 
 	if err := json.Unmarshal(jsonData, &data); err != nil {
@@ -480,7 +521,7 @@ func (s *BlogStore) LoadFromFile() error {
 func (s *BlogStore) GetAllBlogs() []Blog {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	publicBlogs := make([]Blog, 0)
 	for _, blog := range s.blogs {
 		if !blog.IsPrivate {
@@ -489,7 +530,7 @@ func (s *BlogStore) GetAllBlogs() []Blog {
 			publicBlogs = append(publicBlogs, blogCopy)
 		}
 	}
-	
+
 	return publicBlogs
 }
 
@@ -497,7 +538,7 @@ func (s *BlogStore) GetAllBlogs() []Blog {
 func (s *BlogStore) GetBlogsByUserID(userID int, currentUserID int) []Blog {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	userBlogs := make([]Blog, 0)
 	for _, blog := range s.blogs {
 		// 如果是博客作者本人或者是公开博客，则可以查看
@@ -507,7 +548,7 @@ func (s *BlogStore) GetBlogsByUserID(userID int, currentUserID int) []Blog {
 			userBlogs = append(userBlogs, blogCopy)
 		}
 	}
-	
+
 	return userBlogs
 }
 
@@ -515,20 +556,20 @@ func (s *BlogStore) GetBlogsByUserID(userID int, currentUserID int) []Blog {
 func (s *BlogStore) GetBlogByID(id int, currentUserID int) (Blog, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	for _, blog := range s.blogs {
 		if blog.ID == id {
 			// 如果是私有博客，只有作者本人可以查看
 			if blog.IsPrivate && blog.UserID != currentUserID {
 				return Blog{}, fmt.Errorf("blog with ID %d is private", id)
 			}
-			
+
 			// 创建副本
 			blogCopy := blog
 			return blogCopy, nil
 		}
 	}
-	
+
 	return Blog{}, fmt.Errorf("blog with ID %d not found", id)
 }
 
@@ -572,16 +613,16 @@ func (s *BlogStore) UpdateBlog(id, userID int, title, content string, isPrivate 
 			if blog.UserID != userID {
 				return Blog{}, fmt.Errorf("only the author can update the blog")
 			}
-			
+
 			// 更新博客
 			s.blogs[i].Title = title
 			s.blogs[i].Content = content
 			s.blogs[i].IsPrivate = isPrivate
 			s.blogs[i].UpdatedAt = time.Now()
-			
+
 			// 保存数据到文件
 			go s.SaveToFile()
-			
+
 			return s.blogs[i], nil
 		}
 	}
@@ -600,13 +641,13 @@ func (s *BlogStore) DeleteBlog(id, userID int) error {
 			if blog.UserID != userID {
 				return fmt.Errorf("only the author can delete the blog")
 			}
-			
+
 			// 删除博客
 			s.blogs = append(s.blogs[:i], s.blogs[i+1:]...)
-			
+
 			// 保存数据到文件
 			go s.SaveToFile()
-			
+
 			return nil
 		}
 	}
@@ -627,11 +668,11 @@ func (s *BlogStore) AddComment(blogID, userID int, content string) (Comment, err
 			break
 		}
 	}
-	
+
 	if blogIndex == -1 {
 		return Comment{}, fmt.Errorf("blog with ID %d not found", blogID)
 	}
-	
+
 	// 如果是私有博客，只有作者本人可以评论
 	if s.blogs[blogIndex].IsPrivate && s.blogs[blogIndex].UserID != userID {
 		return Comment{}, fmt.Errorf("cannot comment on private blog")
@@ -673,11 +714,11 @@ func (s *BlogStore) DeleteComment(blogID, commentID, userID int) error {
 			break
 		}
 	}
-	
+
 	if blogIndex == -1 {
 		return fmt.Errorf("blog with ID %d not found", blogID)
 	}
-	
+
 	// 查找评论
 	var commentIndex = -1
 	for i, comment := range s.blogs[blogIndex].Comments {
@@ -686,26 +727,26 @@ func (s *BlogStore) DeleteComment(blogID, commentID, userID int) error {
 			break
 		}
 	}
-	
+
 	if commentIndex == -1 {
 		return fmt.Errorf("comment with ID %d not found", commentID)
 	}
-	
+
 	// 只有评论作者或博客作者可以删除评论
 	comment := s.blogs[blogIndex].Comments[commentIndex]
 	if comment.UserID != userID && s.blogs[blogIndex].UserID != userID {
 		return fmt.Errorf("only the comment author or blog author can delete the comment")
 	}
-	
+
 	// 删除评论
 	s.blogs[blogIndex].Comments = append(
-		s.blogs[blogIndex].Comments[:commentIndex], 
-		s.blogs[blogIndex].Comments[commentIndex+1:]...
+		s.blogs[blogIndex].Comments[:commentIndex],
+		s.blogs[blogIndex].Comments[commentIndex+1:]...,
 	)
-	
+
 	// 保存数据到文件
 	go s.SaveToFile()
-	
+
 	return nil
 }
 
@@ -784,23 +825,23 @@ func main() {
 	// 设置优雅关闭
 	quit := make(chan struct{})
 	var wg sync.WaitGroup
-	
+
 	// 启动自动保存
 	startAutoSave(&wg, quit)
-	
+
 	// 捕获系统信号
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigChan
 		fmt.Println("\n正在关闭服务器...")
-		
+
 		// 停止自动保存
 		close(quit)
-		
+
 		// 等待所有goroutine完成
 		wg.Wait()
-		
+
 		// 保存数据
 		fmt.Println("正在保存数据...")
 		if err := userStore.SaveToFile(); err != nil {
@@ -812,11 +853,11 @@ func main() {
 		if err := blogStore.SaveToFile(); err != nil {
 			log.Printf("保存博客数据失败: %v\n", err)
 		}
-		
+
 		fmt.Println("服务器已安全关闭")
 		os.Exit(0)
 	}()
-	
+
 	// 静态文件服务
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
@@ -826,12 +867,13 @@ func main() {
 	http.HandleFunc("/logout", handleLogout)
 
 	// 待办事项 API 路由（需要认证）
-	http.HandleFunc("/api/current-user", authMiddleware(handleCurrentUser))
-	http.HandleFunc("/api/todos", authMiddleware(handleTodos))
-	http.HandleFunc("/api/completed-todos", authMiddleware(handleCompletedTodos))
-	http.HandleFunc("/api/todos/toggle/", authMiddleware(handleToggleTodo))
-	http.HandleFunc("/api/todos/mark-deleted/", authMiddleware(handleMarkTodoAsDeleted))
-	http.HandleFunc("/api/todos/delete/", authMiddleware(handleDeleteTodo))
+http.HandleFunc("/api/current-user", authMiddleware(handleCurrentUser))
+http.HandleFunc("/api/todos", authMiddleware(handleTodos))
+http.HandleFunc("/api/completed-todos", authMiddleware(handleCompletedTodos))
+http.HandleFunc("/api/todos/toggle/", authMiddleware(handleToggleTodo))
+http.HandleFunc("/api/todos/mark-deleted/", authMiddleware(handleMarkTodoAsDeleted))
+http.HandleFunc("/api/todos/delete/", authMiddleware(handleDeleteTodo))
+http.HandleFunc("/api/todos/update-order", authMiddleware(handleUpdateTodoOrder))
 
 	// 博客 API 路由（需要认证）
 	http.HandleFunc("/api/blogs", authMiddleware(handleBlogs))
@@ -854,12 +896,12 @@ func main() {
 func handleIndex(w http.ResponseWriter, r *http.Request) {
 	// 获取当前用户名
 	username := r.Header.Get("X-Username")
-	
+
 	// 传递用户名到模板
 	data := map[string]interface{}{
 		"Username": username,
 	}
-	
+
 	err := templates.ExecuteTemplate(w, "index.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -882,7 +924,7 @@ func handleTodos(w http.ResponseWriter, r *http.Request) {
 
 	// 默认不包含已删除的待办事项
 	includeDeleted := false
-	
+
 	// 检查是否请求包含已删除的待办事项
 	includeDeletedStr := r.URL.Query().Get("include_deleted")
 	if includeDeletedStr != "" {
@@ -901,7 +943,8 @@ func handleTodos(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		var todo struct {
-			Title string `json:"title"`
+			Title    string `json:"title"`
+			Priority int    `json:"priority"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&todo); err != nil {
@@ -910,7 +953,7 @@ func handleTodos(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 添加待办事项，关联到当前用户
-		newTodo := todoStore.Add(userID, todo.Title)
+		newTodo := todoStore.Add(userID, todo.Title, todo.Priority)
 		json.NewEncoder(w).Encode(newTodo)
 
 	default:
@@ -1239,12 +1282,12 @@ func handleBlogComments(w http.ResponseWriter, r *http.Request) {
 func handleBlogsPage(w http.ResponseWriter, r *http.Request) {
 	// 获取当前用户名
 	username := r.Header.Get("X-Username")
-	
+
 	// 传递用户名到模板
 	data := map[string]interface{}{
 		"Username": username,
 	}
-	
+
 	err := templates.ExecuteTemplate(w, "blogs.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1281,7 +1324,7 @@ func handleBlogPage(w http.ResponseWriter, r *http.Request) {
 		"Blog":     blog,
 		"UserID":   userID,
 	}
-	
+
 	err = templates.ExecuteTemplate(w, "blog.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1292,12 +1335,12 @@ func handleBlogPage(w http.ResponseWriter, r *http.Request) {
 func handleNewBlogPage(w http.ResponseWriter, r *http.Request) {
 	// 获取当前用户名
 	username := r.Header.Get("X-Username")
-	
+
 	// 传递用户名到模板
 	data := map[string]interface{}{
 		"Username": username,
 	}
-	
+
 	err := templates.ExecuteTemplate(w, "new_blog.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1339,8 +1382,8 @@ func handleEditBlogPage(w http.ResponseWriter, r *http.Request) {
 		"Username": r.Header.Get("X-Username"),
 		"Blog":     blog,
 	}
-	
-	err = templates.ExecuteTemplate(w, "edit-blog.html", data)
+
+	err = templates.ExecuteTemplate(w, "edit_blog.html", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -1378,6 +1421,42 @@ func handleDeleteTodo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// 处理待办事项排序更新
+func handleUpdateTodoOrder(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 获取当前用户ID
+	userID, err := getCurrentUserID(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	// 解析请求体
+	var orderUpdate struct {
+		TodoID int `json:"todo_id"`
+		Order  int `json:"order"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&orderUpdate); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// 更新待办事项顺序
+	todo, err := todoStore.UpdateOrder(orderUpdate.TodoID, orderUpdate.Order, userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(todo)
 }
 
 // 处理用户注册

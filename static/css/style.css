@@ -61,9 +61,60 @@ h1 {
 .todo-item {
     display: flex;
     align-items: center;
-    padding: 15px;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: move;
+}
+
+.priority-section {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.priority-section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
     border-bottom: 1px solid #eee;
-    animation: fadeIn 0.3s ease-in-out;
+}
+
+.priority-items {
+    min-height: 50px;
+    padding: 5px;
+}
+
+.priority-section-high {
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+.priority-section-medium {
+    background-color: rgba(241, 196, 15, 0.1);
+}
+
+.priority-section-low {
+    background-color: rgba(46, 204, 113, 0.1);
+}
+
+.priority-high {
+    border-left: 3px solid #e74c3c;
+}
+
+.priority-medium {
+    border-left: 3px solid #f1c40f;
+}
+
+.priority-low {
+    border-left: 3px solid #2ecc71;
+}
+
+.todo-item.dragging {
+    opacity: 0.5;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fadeIn {
